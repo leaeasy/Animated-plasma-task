@@ -90,13 +90,44 @@ PlasmaCore.ToolTipArea {
         Translate { id: entrySlide; y: 0 }
     ]
 
-    Behavior on x {
-        enabled: completed
-        NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+    SmoothedAnimation {
+        id: smoothX
+        target: translateTransform
+        property: "x"
+        duration: 400
+        velocity: -1
     }
-    Behavior on y {
-        enabled: completed
-        NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+    SmoothedAnimation {
+        id: smoothY
+        target: translateTransform
+        property: "y"
+        duration: 400
+        velocity: -1
+    }
+    Timer {
+        id: posWatch
+        interval: 30
+        running: true
+        repeat: true
+        property real lastX: task.x
+        property real lastY: task.y
+        onTriggered: {
+            if (!completed) {
+                lastX = task.x; lastY = task.y; return;
+            }
+            if (task.x !== lastX) {
+                smoothX.from = 0;
+                smoothX.to = lastX - task.x;
+                smoothX.start();
+                lastX = task.x;
+            }
+            if (task.y !== lastY) {
+                smoothY.from = 0;
+                smoothY.to = lastY - task.y;
+                smoothY.start();
+                lastY = task.y;
+            }
+        }
     }
 
     SequentialAnimation {
