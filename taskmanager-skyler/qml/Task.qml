@@ -59,6 +59,7 @@ PlasmaCore.ToolTipArea {
     property bool inPopup: false
     property bool isWindow: model.IsWindow
     property bool minimizeFromClick: false
+    property bool entering: false
     property int childCount: model.ChildCount
     property int previousChildCount: 0
     property alias labelText: label.text
@@ -86,7 +87,7 @@ PlasmaCore.ToolTipArea {
     mainItem: !Plasmoid.configuration.showToolTips || !model.IsWindow ? pinnedAppToolTipDelegate : openWindowToolTipDelegate
 
     onXChanged: {
-        if (!completed) {
+        if (!completed || entering) {
             return;
         }
         if (oldX < 0) {
@@ -99,7 +100,7 @@ PlasmaCore.ToolTipArea {
         moveAnim.restart();
     }
     onYChanged: {
-        if (!completed) {
+        if (!completed || entering) {
             return;
         }
         if (oldY < 0) {
@@ -151,6 +152,8 @@ PlasmaCore.ToolTipArea {
 
     SequentialAnimation {
         id: entryAnim
+        onStarted: task.entering = true
+        onStopped: task.entering = false
         ParallelAnimation {
             NumberAnimation { target: task; property: "opacity"; from: 0.0; to: 1.0; duration: 140; easing.type: Easing.OutQuad }
             NumberAnimation { target: entrySlide; property: "y"; from: 30; to: 0; duration: 140; easing.type: Easing.OutCubic }
