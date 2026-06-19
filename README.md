@@ -1,21 +1,20 @@
-# Skyler Plasma Task Manager
+# SkyAnimation Plasma Plugins
 
-Forked KDE Plasma 6 icons-only task manager with press animation.
+Forked KDE Plasma 6 plasmoids with press/entry/minimize animations.
 
-## Features
+## Plugins
 
-- **Press animation**: Icons shrink to 85% on press and bounce back with elastic easing
-- Based on KDE Plasma 6 `org.kde.plasma.icontasks` / `org.kde.plasma.taskmanager`
-- Fully independent build — does not require the full plasma-desktop source tree
+| Plugin | ID | Animations |
+|--------|-----|------------|
+| 图标任务管理器 (SkyAnimation) | `org.kde.plasma.icontasks.skyler` | 按压缩放 / 入场弹出 / 最小化弹跳 |
+| 应用启动器 (SkyAnimation) | `org.kde.plasma.kickoff.skyler` | 按压缩放（弹性回弹） |
 
-## Requirements (build deps)
+## Requirements (Arch / CachyOS)
 
-Arch / CachyOS:
-```
-sudo pacman -S cmake extra-cmake-modules qt6-declarative \
-  kf6-plasma kf6-kio kf6-notifications kf6-service kf6-windowsystem \
-  plasma-activities plasma-activities-stats libksysguard \
-  libnotificationmanager
+```bash
+sudo pacman -S --needed cmake extra-cmake-modules qt6-declarative \
+    kf6-plasma kf6-kio kf6-notifications kf6-service kf6-windowsystem \
+    plasma-activities plasma-activities-stats libksysguard libnotificationmanager
 ```
 
 ## Build & Install
@@ -25,22 +24,19 @@ mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 make -j$(nproc)
 sudo make install
-```
-
-Restart plasmashell:
-```bash
+rm -rf ~/.cache/plasma* ~/.cache/kpackage*
 systemctl restart --user plasma-plasmashell
-# or: killall plasmashell && kstart5 plasmashell
 ```
 
-Then: Right-click panel → Add Widgets → search "Skyler"
+Then: right-click panel → Add Widgets → search **SkyAnimation**.
 
-## Plugin IDs
+## Rebuild after code changes
 
-| Component | ID |
-|-----------|-----|
-| Wrapper   | `org.kde.plasma.icontasks.skyler` |
-| Backend   | `org.kde.plasma.taskmanager.skyler` |
+```bash
+cd build
+make -j$(nproc) && sudo make install
+systemctl restart --user plasma-plasmashell
+```
 
 ## License
 
