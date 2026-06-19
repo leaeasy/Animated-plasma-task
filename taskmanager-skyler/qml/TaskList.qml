@@ -17,10 +17,6 @@ GridLayout {
     rowSpacing: 0
     columnSpacing: 0
 
-    move: Transition {
-        NumberAnimation { properties: "x,y"; duration: 500; easing.type: Easing.OutCubic }
-    }
-
     property int animationsRunning: 0
     onAnimationsRunningChanged: {
         animating = animationsRunning > 0;

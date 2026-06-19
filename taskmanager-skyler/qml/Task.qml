@@ -90,6 +90,15 @@ PlasmaCore.ToolTipArea {
         Translate { id: entrySlide; y: 0 }
     ]
 
+    Behavior on x {
+        enabled: completed
+        NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+    }
+    Behavior on y {
+        enabled: completed
+        NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+    }
+
     SequentialAnimation {
         id: entryAnim
         ParallelAnimation {
