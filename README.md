@@ -16,9 +16,9 @@ Forked KDE Plasma 6 plasmoids with press / entry / minimize animations.
 
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.local
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 make -j$(nproc)
-make install
+sudo make install
 ```
 
 Right-click panel → Add Widgets → search **SkyAnimation**.

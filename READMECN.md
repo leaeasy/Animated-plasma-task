@@ -16,9 +16,9 @@
 
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.local
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 make -j$(nproc)
-make install
+sudo make install
 ```
 
 面板右键 → 添加部件 → 搜索 **SkyAnimation**。
