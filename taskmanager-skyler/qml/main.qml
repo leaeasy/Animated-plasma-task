@@ -341,6 +341,56 @@ PlasmoidItem {
             PlasmaComponents3.BusyIndicator {}
         }
 
+        // ---- ghost component for exit animation ----
+        Component {
+            id: ghostComp
+            Item {
+                id: ghost
+                property var iconSource
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width, parent.height)
+                    height: width
+                    source: parent.iconSource
+                }
+
+                SequentialAnimation {
+                    id: exitAnim
+                    ParallelAnimation {
+                        NumberAnimation { target: ghost; property: "opacity"; to: 0; duration: 200; easing.type: Easing.InQuad }
+                        NumberAnimation { id: slideAnim; target: ghost; property: "y"; duration: 200; easing.type: Easing.InQuad }
+                    }
+                    ScriptAction { script: ghost.destroy() }
+                }
+
+                Component.onCompleted: {
+                    slideAnim.to = ghost.y + 30;
+                    exitAnim.start();
+                }
+            }
+        }
+
+        // ---- exit animation: intercept row removal before delegates are destroyed ----
+        Connections {
+            target: tasksModel
+            function onRowsAboutToBeRemoved(parentModelIndex, first, last) {
+                for (var i = first; i <= last; i++) {
+                    var taskItem = taskRepeater.itemAt(i);
+                    if (!taskItem || !taskItem.isWindow) continue;
+
+                    var pos = taskItem.mapToItem(ghostContainer, 0, 0);
+                    ghostComp.createObject(ghostContainer, {
+                        x: pos.x,
+                        y: pos.y,
+                        width: taskItem.width,
+                        height: taskItem.height,
+                        iconSource: taskItem.model.decoration
+                    });
+                }
+            }
+        }
+
         // Save drag data
         Item {
             id: dragHelper
@@ -499,6 +549,14 @@ PlasmoidItem {
                     delegate: Task {
                         tasksRoot: tasks
                     }
+                }
+
+                // Overlay for exit-animation ghost items, inside taskList
+                // so that LayoutMirroring and coordinate mapping are consistent
+                Item {
+                    id: ghostContainer
+                    anchors.fill: parent
+                    z: 999
                 }
             }
         }
