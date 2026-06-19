@@ -118,6 +118,11 @@ PlasmaCore.ToolTipArea {
             NumberAnimation { target: minimizeBounce; property: "y"; to: 0; duration: 120 * task.animMul; easing.type: Easing.OutQuad }
         }
     }
+
+    function triggerMinimizePulse(): void {
+        minimizeAnim.start();
+    }
+
     NumberAnimation {
         id: pressDownAnim
         target: icon

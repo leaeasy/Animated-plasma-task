@@ -380,6 +380,20 @@ PlasmoidItem {
                     var taskItem = taskRepeater.itemAt(i);
                     if (!taskItem || !taskItem.isWindow) continue;
 
+                    // Pinned launcher window: pulse the launcher icon instead of ghost exit
+                    if (taskItem.model.HasLauncher) {
+                        var launcherUrl = taskItem.model.LauncherUrlWithoutIcon;
+                        for (var j = 0; j < taskRepeater.count; j++) {
+                            var launcher = taskRepeater.itemAt(j);
+                            if (launcher && launcher.model.IsLauncher
+                                && launcher.model.LauncherUrlWithoutIcon === launcherUrl) {
+                                launcher.triggerMinimizePulse();
+                                break;
+                            }
+                        }
+                        continue;
+                    }
+
                     var pos = taskItem.mapToItem(ghostContainer, 0, 0);
                     ghostComp.createObject(ghostContainer, {
                         x: pos.x,
@@ -392,8 +406,6 @@ PlasmoidItem {
                 }
             }
         }
-
-        // Save drag data
         Item {
             id: dragHelper
 
