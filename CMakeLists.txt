@@ -66,6 +66,7 @@ endforeach()
 add_custom_target(extra_translations ALL DEPENDS ${EXTRA_MO_FILES})
 
 # ── Install taskmanager translations (merge extra) ────
+# msgcat cannot merge binary .mo; convert orig→po, merge, recompile
 install(CODE "
     set(ORIG_DOMAIN plasma_applet_org.kde.plasma.taskmanager)
     set(SKYLER_DOMAINS
@@ -77,13 +78,21 @@ install(CODE "
         get_filename_component(LOC \${LOCALE_DIR} DIRECTORY)
         get_filename_component(LOC \${LOC} NAME)
         set(ORIG_MO \"\${LOCALE_DIR}/\${ORIG_DOMAIN}.mo\")
-        set(EXTRA_MO \"${EXTRA_MO_DIR}/\${LOC}/extra.mo\")
+        set(EXTRA_PO \"${EXTRA_PO_DIR}/\${LOC}/plasma_applet_org.kde.plasma.taskmanager_extra.po\")
         if(EXISTS \"\${ORIG_MO}\")
             foreach(SKYLER_DOMAIN \${SKYLER_DOMAINS})
-                if(EXISTS \"\${EXTRA_MO}\")
+                if(EXISTS \"\${EXTRA_PO}\")
+                    set(TMP_DIR \"\${CMAKE_CURRENT_BINARY_DIR}/tl-tmp\")
+                    file(MAKE_DIRECTORY \"\${TMP_DIR}\")
+                    execute_process(COMMAND msgunfmt \"\${ORIG_MO}\"
+                        OUTPUT_FILE \"\${TMP_DIR}/orig.po\")
                     execute_process(COMMAND msgcat --use-first
-                        \"\${ORIG_MO}\" \"\${EXTRA_MO}\"
-                        -o \"\${LOCALE_DIR}/\${SKYLER_DOMAIN}.mo\")
+                        \"\${TMP_DIR}/orig.po\" \"\${EXTRA_PO}\"
+                        OUTPUT_FILE \"\${TMP_DIR}/merged.po\")
+                    execute_process(COMMAND msgfmt
+                        -o \"\${LOCALE_DIR}/\${SKYLER_DOMAIN}.mo\"
+                        \"\${TMP_DIR}/merged.po\")
+                    file(REMOVE_RECURSE \"\${TMP_DIR}\")
                 else()
                     execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink
                         \"\${ORIG_DOMAIN}.mo\"
