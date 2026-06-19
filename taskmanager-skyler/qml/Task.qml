@@ -150,15 +150,21 @@ PlasmaCore.ToolTipArea {
     SequentialAnimation {
         id: entryAnim
         ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; from: 0.3; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
-            NumberAnimation { target: task; property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutQuad }
-            NumberAnimation { target: entrySlide; property: "y"; from: 25; to: 0; duration: 180; easing.type: Easing.OutCubic }
+            NumberAnimation { target: icon; property: "scale"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutCubic }
+            NumberAnimation { target: task; property: "opacity"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutQuad }
+            NumberAnimation { target: entrySlide; property: "y"; from: 30; to: 0; duration: 200; easing.type: Easing.OutCubic }
         }
     }
     SequentialAnimation {
         id: minimizeAnim
-        NumberAnimation { target: icon; property: "scale"; to: 0.85; duration: 80; easing.type: Easing.InQuad }
-        NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutQuad }
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; to: 0.85; duration: 80; easing.type: Easing.InQuad }
+            NumberAnimation { target: minimizeBounce; property: "y"; to: 10; duration: 80; easing.type: Easing.InQuad }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutQuad }
+            NumberAnimation { target: minimizeBounce; property: "y"; to: 0; duration: 150; easing.type: Easing.OutBounce }
+        }
     }
     NumberAnimation {
         id: pressDownAnim
@@ -586,6 +592,11 @@ PlasmaCore.ToolTipArea {
                 && task.smartLauncherItem && task.smartLauncherItem.countVisible
         source: "TaskBadgeOverlay.qml"
 
+        transform: Translate {
+            id: minimizeBounce
+            y: 0
+        }
+
         function adjustMargin(isVertical: bool, size: real, margin: real): real {
             if (!size) {
                 return margin;
@@ -729,10 +740,10 @@ PlasmaCore.ToolTipArea {
             taskInitComponent.createObject(task);
         }
         // Entry animation only for new windows, not for pinned launchers
-        if (model.IsWindow && !model.IsLauncher) {
-            icon.scale = 0.3;
+        if (model.IsWindow && !model.IsLauncher && !model.HasLauncher) {
+            icon.scale = 0.0;
             task.opacity = 0.0;
-            entrySlide.y = 25;
+            entrySlide.y = 30;
             entryAnim.start();
         }
         completed = true;
