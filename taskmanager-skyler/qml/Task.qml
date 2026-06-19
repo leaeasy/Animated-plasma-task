@@ -70,6 +70,11 @@ PlasmaCore.ToolTipArea {
     property var audioStreams: []
     property bool delayAudioStreamIndicator: false
     property bool completed: false
+
+    // Suppress minimise animation for newly-appeared tasks
+    // (e.g. virtual-desktop switch where IsMinimized arrives set).
+    Timer { id: entryCooldown; interval: 300 }
+
     readonly property bool audioIndicatorsEnabled: Plasmoid.configuration.indicateAudioStreams
     readonly property bool tooltipControlsEnabled: Plasmoid.configuration.tooltipControls
     readonly property bool hasAudioStream: audioStreams.length > 0
@@ -657,10 +662,12 @@ PlasmaCore.ToolTipArea {
             }
             StateChangeScript {
                 script: {
+                    if (entryCooldown.running) return;  // just appeared
                     if (task.minimizeFromClick) {
                         task.minimizeFromClick = false;
-                    } else {
                         minimizeAnim.start();
+                    } else {
+                        minimizeDelay.start();
                     }
                 }
             }
@@ -674,6 +681,16 @@ PlasmaCore.ToolTipArea {
             }
         }
     ]
+
+    Timer {
+        id: minimizeDelay
+        interval: 50
+        onTriggered: {
+            if (entryCooldown.running) return;
+            if (task.parent && task.isWindow && task.model.IsMinimized)
+                minimizeAnim.start();
+        }
+    }
 
     Component.onCompleted: {
         if (!inPopup && model.IsWindow) {
@@ -693,5 +710,6 @@ PlasmaCore.ToolTipArea {
             entryAnim.start();
         }
         completed = true;
+        entryCooldown.start();
     }
 }
