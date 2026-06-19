@@ -256,11 +256,14 @@ PlasmoidItem {
 
          onPressed: {
             wasExpanded = kickoff.expanded;
-            buttonIcon.scale = 0.85;
+            pressDown.start();
          }
-         onReleased: buttonIcon.scale = 1.0
-         onCanceled: buttonIcon.scale = 1.0
+         onReleased: pressUp.start()
+         onCanceled: pressUp.start()
          onClicked: kickoff.expanded = !wasExpanded
+
+        NumberAnimation { id: pressDown; target: buttonIcon; property: "scale"; to: 0.85; duration: 80; easing.type: Easing.OutQuad }
+        NumberAnimation { id: pressUp; target: buttonIcon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutBack }
 
         DropArea {
             id: compactDragArea
@@ -287,10 +290,6 @@ PlasmoidItem {
 
              Kirigami.Icon {
                 id: buttonIcon
-
-                Behavior on scale {
-                    NumberAnimation { duration: 150; easing.type: Easing.OutBack }
-                }
 
                 Layout.fillWidth: kickoff.vertical
                 Layout.fillHeight: !kickoff.vertical
