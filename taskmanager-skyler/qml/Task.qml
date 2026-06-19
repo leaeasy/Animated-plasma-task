@@ -145,8 +145,7 @@ PlasmaCore.ToolTipArea {
     }
     transform: [
         Translate { id: translateTransform },
-        Translate { id: entrySlide; y: 0 },
-        Translate { id: bounceSlide; y: 0 }
+        Translate { id: entrySlide; y: 0 }
     ]
     SequentialAnimation {
         id: entryAnim
@@ -158,14 +157,8 @@ PlasmaCore.ToolTipArea {
     }
     SequentialAnimation {
         id: minimizeAnim
-        ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; to: 0.85; duration: 80; easing.type: Easing.InQuad }
-            NumberAnimation { target: bounceSlide; property: "y"; to: 8; duration: 80; easing.type: Easing.InQuad }
-        }
-        ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutQuad }
-            NumberAnimation { target: bounceSlide; property: "y"; to: 0; duration: 150; easing.type: Easing.OutQuad }
-        }
+        NumberAnimation { target: icon; property: "scale"; to: 0.85; duration: 80; easing.type: Easing.InQuad }
+        NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutQuad }
     }
     NumberAnimation {
         id: pressDownAnim
@@ -736,7 +729,7 @@ PlasmaCore.ToolTipArea {
             taskInitComponent.createObject(task);
         }
         // Entry animation only for new windows, not for pinned launchers
-        if (model.IsWindow) {
+        if (model.IsWindow && !model.IsLauncher) {
             icon.scale = 0.3;
             task.opacity = 0.0;
             entrySlide.y = 25;

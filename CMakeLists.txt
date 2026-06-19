@@ -43,6 +43,26 @@ add_subdirectory(taskmanager-skyler)
 # ── Install icontasks-skyler wrapper ─────────────────
 plasma_install_package(icontasks-skyler org.kde.plasma.icontasks.skyler)
 
+# ── Reuse original taskmanager translations ──────────
+install(CODE "
+    set(ORIG_DOMAIN plasma_applet_org.kde.plasma.taskmanager)
+    set(SKYLER_DOMAINS
+        plasma_applet_org.kde.plasma.icontasks.skyler
+        plasma_applet_org.kde.plasma.taskmanager.skyler
+    )
+    file(GLOB LOCALE_DIRS /usr/share/locale/*/LC_MESSAGES)
+    foreach(LOCALE_DIR \${LOCALE_DIRS})
+        set(ORIG_MO \"\${LOCALE_DIR}/\${ORIG_DOMAIN}.mo\")
+        if(EXISTS \"\${ORIG_MO}\")
+            foreach(SKYLER_DOMAIN \${SKYLER_DOMAINS})
+                execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink
+                    \"\${ORIG_DOMAIN}.mo\"
+                    \"\${LOCALE_DIR}/\${SKYLER_DOMAIN}.mo\")
+            endforeach()
+        endif()
+    endforeach()
+")
+
 # ── Status ───────────────────────────────────────────
 message(STATUS "")
 message(STATUS "Skyler Plasma Task Manager ${PROJECT_VERSION}")
