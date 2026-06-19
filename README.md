@@ -9,13 +9,6 @@ Forked KDE Plasma 6 plasmoids with press / entry / minimize animations.
 | Icons-Only Task Manager (SkyAnimation) | `org.kde.plasma.icontasks.skyler` | press scale · entry slide-in · minimize bounce |
 | Application Launcher (SkyAnimation) | `org.kde.plasma.kickoff.skyler` | press scale |
 
-## Requirements (Arch / CachyOS)
-
-```bash
-sudo pacman -S --needed cmake extra-cmake-modules qt6-declarative \
-    kf6-plasma kf6-kio kf6-notifications kf6-service kf6-windowsystem \
-    plasma-activities plasma-activities-stats libksysguard libnotificationmanager
-```
 
 ## Build & Install
 
@@ -24,18 +17,9 @@ mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 make -j$(nproc)
 sudo make install
-rm -rf ~/.cache/plasma* ~/.cache/kpackage*
-systemctl restart --user plasma-plasmashell
 ```
 
 Right-click panel → Add Widgets → search **SkyAnimation**.
-
-## Rebuild after changes
-
-```bash
-cd build && make -j$(nproc) && sudo make install
-systemctl restart --user plasma-plasmashell
-```
 
 ## License
 
