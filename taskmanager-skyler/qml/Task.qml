@@ -146,43 +146,21 @@ PlasmaCore.ToolTipArea {
     transform: Translate {
         id: translateTransform
     }
-    ParallelAnimation {
+    NumberAnimation {
         id: pressDownAnim
-        NumberAnimation {
-            target: pressScaleTransform
-            properties: "xScale"
-            from: 1.0
-            to: 0.85
-            duration: 80
-            easing.type: Easing.OutQuad
-        }
-        NumberAnimation {
-            target: pressScaleTransform
-            properties: "yScale"
-            from: 1.0
-            to: 0.85
-            duration: 80
-            easing.type: Easing.OutQuad
-        }
+        target: icon
+        property: "scale"
+        to: 0.85
+        duration: 80
+        easing.type: Easing.OutQuad
     }
-    ParallelAnimation {
+    NumberAnimation {
         id: pressUpAnim
-        NumberAnimation {
-            target: pressScaleTransform
-            properties: "xScale"
-            from: 0.85
-            to: 1.0
-            duration: 250
-            easing.type: Easing.OutBack
-        }
-        NumberAnimation {
-            target: pressScaleTransform
-            properties: "yScale"
-            from: 0.85
-            to: 1.0
-            duration: 250
-            easing.type: Easing.OutBack
-        }
+        target: icon
+        property: "scale"
+        to: 1.0
+        duration: 250
+        easing.type: Easing.OutBack
     }
 
     Accessible.name: model.display
@@ -520,12 +498,6 @@ PlasmaCore.ToolTipArea {
         property bool isHovered: task.highlighted && Plasmoid.configuration.taskHoverEffect
         property string basePrefix: "normal"
         prefix: isHovered ? TaskManagerApplet.TaskTools.taskPrefixHovered(basePrefix, Plasmoid.location) : TaskManagerApplet.TaskTools.taskPrefix(basePrefix, Plasmoid.location)
-
-        transform: Scale {
-            id: pressScaleTransform
-            origin.x: frame.width / 2
-            origin.y: frame.height / 2
-        }
 
         // Avoid repositioning delegate item after dragFinished
         DragHandler {

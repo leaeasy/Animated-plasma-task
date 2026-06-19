@@ -1,4 +1,4 @@
-add_definitions(-DTRANSLATION_DOMAIN=\"plasma_applet_org.kde.plasma.taskmanager.skyler\")
+add_definitions(-DTRANSLATION_DOMAIN=\"plasma_applet_org.kde.plasma.taskmanager\")
 
 plasma_add_applet(org.kde.plasma.taskmanager.skyler
     QML_SOURCES

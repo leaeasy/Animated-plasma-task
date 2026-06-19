@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
 
 # Set KDE install dirs before any find_package that pulls in GNUInstallDirs
 if(NOT DEFINED KDE_INSTALL_PLUGINDIR)
-    set(KDE_INSTALL_PLUGINDIR "${CMAKE_INSTALL_PREFIX}/lib/plugins" CACHE PATH "KDE plugin install dir")
+    set(KDE_INSTALL_PLUGINDIR "${CMAKE_INSTALL_PREFIX}/lib/qt6/plugins" CACHE PATH "KDE plugin install dir")
 endif()
 if(NOT DEFINED KDE_INSTALL_QMLDIR)
     set(KDE_INSTALL_QMLDIR "${CMAKE_INSTALL_PREFIX}/lib/qt6/qml" CACHE PATH "QML install dir")
