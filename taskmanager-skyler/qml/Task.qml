@@ -145,14 +145,26 @@ PlasmaCore.ToolTipArea {
     }
     transform: [
         Translate { id: translateTransform },
-        Translate { id: entrySlide; y: 0 }
+        Translate { id: entrySlide; y: 0 },
+        Translate { id: bounceSlide; y: 0 }
     ]
     SequentialAnimation {
         id: entryAnim
         ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; from: 0.3; to: 1.0; duration: 280; easing.type: Easing.OutBack }
+            NumberAnimation { target: icon; property: "scale"; from: 0.3; to: 1.0; duration: 280; easing.type: Easing.OutCubic }
             NumberAnimation { target: task; property: "opacity"; from: 0.0; to: 1.0; duration: 280; easing.type: Easing.OutQuad }
             NumberAnimation { target: entrySlide; property: "y"; from: 25; to: 0; duration: 280; easing.type: Easing.OutCubic }
+        }
+    }
+    SequentialAnimation {
+        id: minimizeAnim
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; to: 0.85; duration: 80; easing.type: Easing.InQuad }
+            NumberAnimation { target: bounceSlide; property: "y"; to: 8; duration: 80; easing.type: Easing.InQuad }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutQuad }
+            NumberAnimation { target: bounceSlide; property: "y"; to: 0; duration: 150; easing.type: Easing.OutQuad }
         }
     }
     NumberAnimation {
@@ -697,6 +709,9 @@ PlasmaCore.ToolTipArea {
 
             PropertyChanges {
                 frame.basePrefix: "minimized"
+            }
+            StateChangeScript {
+                script: minimizeAnim.start()
             }
         },
         State {
