@@ -275,8 +275,8 @@ PlasmoidItem {
         }
         ParallelAnimation {
             id: pressUp
-            NumberAnimation { target: pressScale; property: "xScale"; to: 1.0; duration: 150; easing.type: Easing.OutBack }
-            NumberAnimation { target: pressScale; property: "yScale"; to: 1.0; duration: 150; easing.type: Easing.OutBack }
+            NumberAnimation { target: pressScale; property: "xScale"; to: 1.0; duration: 250; easing.type: Easing.OutBack }
+            NumberAnimation { target: pressScale; property: "yScale"; to: 1.0; duration: 250; easing.type: Easing.OutBack }
         }
 
         DropArea {
