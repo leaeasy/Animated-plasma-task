@@ -163,7 +163,7 @@ PlasmaCore.ToolTipArea {
         }
         ParallelAnimation {
             NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 150; easing.type: Easing.OutQuad }
-            NumberAnimation { target: minimizeBounce; property: "y"; to: 0; duration: 150; easing.type: Easing.OutBounce }
+            NumberAnimation { target: minimizeBounce; property: "y"; to: 0; duration: 120; easing.type: Easing.OutQuad }
         }
     }
     NumberAnimation {
@@ -739,8 +739,8 @@ PlasmaCore.ToolTipArea {
         if (!inPopup && !model.IsWindow) {
             taskInitComponent.createObject(task);
         }
-        // Entry animation only for truly new windows (no launcher URL = not from pinned icon)
-        if (model.IsWindow && !model.IsLauncher && model.LauncherUrl.toString() === "") {
+        // Entry animation only for new windows
+        if (model.IsWindow && !model.IsLauncher) {
             icon.scale = 0.5;
             task.opacity = 0.0;
             entrySlide.y = 30;
