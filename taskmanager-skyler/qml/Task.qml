@@ -94,9 +94,11 @@ PlasmaCore.ToolTipArea {
             oldX = x;
             return;
         }
+        slideX.from = oldX - x;
+        slideX.to = 0;
+        slideX.start();
         moveAnim.y = translateTransform.y;
         oldX = x;
-        moveAnim.restart();
     }
     onYChanged: {
         if (!completed || entering) {
@@ -137,9 +139,12 @@ PlasmaCore.ToolTipArea {
         }
     }
 
-    Behavior on x {
-        enabled: !entering
-        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    NumberAnimation {
+        id: slideX
+        target: translateTransform
+        property: "x"
+        duration: 200
+        easing.type: Easing.OutCubic
     }
     transform: [
         Translate { id: translateTransform },
