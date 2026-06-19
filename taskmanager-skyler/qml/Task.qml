@@ -82,41 +82,7 @@ PlasmaCore.ToolTipArea {
 
     // Suppress minimise animation for newly-appeared tasks
     // (e.g. virtual-desktop switch where IsMinimized arrives set).
-    Timer { id: entryCooldown; interval: 300; onTriggered: task.slideReady = true }
-
-    // ── slide tracking: placeholder (task) ↔ icon layer ──────────
-    // task.x / task.y are set instantly by GridLayout.
-    // We detect the jump, push the counter-offset into slideXform
-    // (inside iconBox's transform list), then animate it back to 0.
-    property bool slideReady: false
-    property real lastX: task.x
-    property real lastY: task.y
-
-    onXChanged: {
-        if (!task.slideReady) { lastX = task.x; return; }
-        const dx = lastX - task.x; lastX = task.x;
-        if (Math.abs(dx) < 0.5) return;
-        slideXform.x += dx;
-        slideAnimX.restart();
-    }
-    onYChanged: {
-        if (!task.slideReady) { lastY = task.y; return; }
-        const dy = lastY - task.y; lastY = task.y;
-        if (Math.abs(dy) < 0.5) return;
-        slideXform.y += dy;
-        slideAnimY.restart();
-    }
-
-    PropertyAnimation {
-        id: slideAnimX
-        target: slideXform; property: "x"; to: 0
-        duration: 250; easing.type: Easing.OutCubic
-    }
-    PropertyAnimation {
-        id: slideAnimY
-        target: slideXform; property: "y"; to: 0
-        duration: 250; easing.type: Easing.OutCubic
-    }
+    Timer { id: entryCooldown; interval: 300 }
 
     readonly property bool audioIndicatorsEnabled: Plasmoid.configuration.indicateAudioStreams
     readonly property bool tooltipControlsEnabled: Plasmoid.configuration.tooltipControls
@@ -582,7 +548,6 @@ PlasmaCore.ToolTipArea {
         source: "TaskBadgeOverlay.qml"
 
         transform: [
-            Translate { id: slideXform; x: 0; y: 0 },
             Translate { id: entrySlide; y: 0 },
             Translate { id: minimizeBounce; y: 0 }
         ]

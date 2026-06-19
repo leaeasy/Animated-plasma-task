@@ -142,7 +142,7 @@ PlasmoidItem {
             let startupsWithLaunchers = 0;
 
             for (let i = 0; i < taskRepeater.count; ++i) {
-                const item = taskRepeater.itemAt(i) as Task;
+                const item = taskRepeater.itemAt(i).task;
 
                 // During destruction required properties such as item.model can go null for a while,
                 // so in paths that can trigger on those moments, they need to be guarded
@@ -310,7 +310,7 @@ PlasmoidItem {
             repeat: false
 
             onTriggered: {
-                tasks.publishIconGeometries(taskList.children, tasks);
+                tasks.publishIconGeometries(taskList.children.map(c => c.task), tasks);
             }
         }
 
@@ -443,19 +443,17 @@ PlasmoidItem {
 
                 Layout.maximumWidth: {
                     const totalMaxWidth = children.reduce((accumulator, child) => {
-                            if (!isFinite(child.Layout.maximumWidth)) {
-                                return accumulator;
-                            }
-                            return accumulator + child.Layout.maximumWidth
+                            const t = child.task;
+                            if (!t || !isFinite(t.Layout.maximumWidth)) return accumulator;
+                            return accumulator + t.Layout.maximumWidth;
                         }, 0);
                     return Math.round(totalMaxWidth / widthOccupation);
                 }
                 Layout.maximumHeight: {
                     const totalMaxHeight = children.reduce((accumulator, child) => {
-                            if (!isFinite(child.Layout.maximumHeight)) {
-                                return accumulator;
-                            }
-                            return accumulator + child.Layout.maximumHeight
+                            const t = child.task;
+                            if (!t || !isFinite(t.Layout.maximumHeight)) return accumulator;
+                            return accumulator + t.Layout.maximumHeight;
                         }, 0);
                     return Math.round(totalMaxHeight / heightOccupation);
                 }
@@ -489,15 +487,67 @@ PlasmoidItem {
 
                 onAnimatingChanged: {
                     if (!animating) {
-                        tasks.publishIconGeometries(children, tasks);
+                        tasks.publishIconGeometries(children.map(c => c.task), tasks);
                     }
                 }
 
                 Repeater {
                     id: taskRepeater
 
-                    delegate: Task {
-                        tasksRoot: tasks
+                    delegate: Item {
+                        id: placeholder
+                        // ── placeholder (GridLayout-managed) ──────────
+                        // Layout properties mirror what Task used to expose
+                        // so GridLayout sizes this wrapper identically.
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        implicitWidth: inner.implicitWidth
+                        implicitHeight: inner.implicitHeight
+
+                        property alias task: inner
+
+                        // ── slide tracking ───────────────────────────
+                        property bool slideReady: false
+                        property real lastX: placeholder.x
+                        property real lastY: placeholder.y
+
+                        onXChanged: {
+                            if (!slideReady) { lastX = x; return; }
+                            const dx = lastX - x; lastX = x;
+                            if (Math.abs(dx) < 0.5) return;
+                            inner.x += dx;
+                            slideAnimX.restart();
+                        }
+                        onYChanged: {
+                            if (!slideReady) { lastY = y; return; }
+                            const dy = lastY - y; lastY = y;
+                            if (Math.abs(dy) < 0.5) return;
+                            inner.y += dy;
+                            slideAnimY.restart();
+                        }
+
+                        PropertyAnimation {
+                            id: slideAnimX; target: inner; property: "x"; to: 0
+                            duration: 250; easing.type: Easing.OutCubic
+                        }
+                        PropertyAnimation {
+                            id: slideAnimY; target: inner; property: "y"; to: 0
+                            duration: 250; easing.type: Easing.OutCubic
+                        }
+
+                        Component.onCompleted: {
+                            lastX = x; lastY = y;
+                            slideTimer.start();
+                        }
+                        Timer { id: slideTimer; interval: 350; onTriggered: slideReady = true }
+
+                        Task {
+                            id: inner
+                            tasksRoot: tasks
+                            x: 0; y: 0
+                            width: placeholder.width
+                            height: placeholder.height
+                        }
                     }
                 }
             }
@@ -532,7 +582,7 @@ PlasmoidItem {
             return;
         }
 
-        const task = taskRepeater.itemAt(index) as Task;
+        const task = taskRepeater.itemAt(index).task;
         if (task) {
             TaskManagerApplet.TaskTools.activateTask(task.modelIndex(), task.model, null, task, Plasmoid, this, effectWatcher.registered);
         }
