@@ -1,6 +1,6 @@
 <div align="center">English | <a href="READMECN.md">中文</a></div>
 
-# SkyAnimation Plasma Plugins
+# Animated Plasma Task Plugins
 
 Forked KDE Plasma 6 plasmoids with press / entry / minimize animations.
 
