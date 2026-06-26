@@ -281,6 +281,36 @@ PlasmoidItem {
         }
     }
 
+    // Intercept model row removals BEFORE the Repeater destroys the delegate,
+    // so we can create ghost exit animations that outlive the Task delegate.
+    // This is the primary mechanism for:
+    //   - Non-pinned last-window-close → exit animation (slide + fade, 500ms)
+    //   - Pinned last-window-close     → exit animation, then launcher reappears
+    // Grouped entry removals happen in TaskGroupingProxyModel::sourceRowsAboutToBeRemoved,
+    // which directly calls beginRemoveRows without a prior ChildCount dataChanged.
+    Connections {
+        target: tasksModel
+
+        function onRowsAboutToBeRemoved(parent: var, first: int, last: int): void {
+            // Ignore removals of group children (parent.valid == true);
+            // those keep the parent delegate alive and ChildCount fires instead.
+            if (parent && parent.valid) {
+                return;
+            }
+
+            for (var i = first; i <= last; i++) {
+                var task = taskRepeater.itemAt(i);
+                if (task && task.model && task.model.IsWindow) {
+                    // Use task.closingDecoration (stored QVariant) instead of
+                    // model.decoration which is unreliable during removal.
+                    tasks.createClosingAnimation(
+                        task.closingDecoration, task, task.width, task.height
+                    );
+                }
+            }
+        }
+    }
+
     Mpris.Mpris2Model {
         id: mpris2Source
     }
@@ -499,9 +529,104 @@ PlasmoidItem {
                     }
                 }
 
+            }
 
+            // Overlay for window-close exit animations (ghost icons that outlive delegates)
+            Item {
+                id: _exitAnimationLayer
+                anchors.fill: parent
+                visible: true
+                z: 999
             }
         }
+    }
+
+    // Component for creating temporary animation ghost icons.
+    // Uses an Item wrapper with iconValue so the QVariant(QIcon) from
+    // model.decoration can be passed through a QML property binding
+    // (Kirigami.Icon handles QIcon correctly when set through bindings).
+    Component {
+        id: ghostComponent
+        Item {
+            property var iconValue: null
+            Kirigami.Icon {
+                anchors.fill: parent
+                source: parent.iconValue
+                active: true
+                enabled: true
+                opacity: 1.0
+                z: 999
+            }
+        }
+    }
+
+    // Pre-defined exit animation template — uses properties to avoid
+    // Qt.createQmlObject scope issues with JS local variables.
+    // speedMul scales durations to match the user's animation speed setting.
+    Component {
+        id: ghostExitAnimComponent
+        SequentialAnimation {
+            id: ghostExitAnim
+            // Configured dynamically via createObject() properties.
+            property Item targetItem: null
+            property real targetStartY: 0
+            property real targetSlide: 50
+            property real speedMul: 1.0
+
+            ParallelAnimation {
+                NumberAnimation {
+                    target: ghostExitAnim.targetItem
+                    property: "opacity"
+                    to: 0
+                    duration: 150 * ghostExitAnim.speedMul
+                    easing.type: Easing.InQuad
+                }
+                NumberAnimation {
+                    target: ghostExitAnim.targetItem
+                    property: "y"
+                    to: ghostExitAnim.targetStartY + ghostExitAnim.targetSlide
+                    duration: 150 * ghostExitAnim.speedMul
+                    easing.type: Easing.InQuad
+                }
+            }
+            ScriptAction {
+                script: {
+                    if (ghostExitAnim.targetItem) {
+                        ghostExitAnim.targetItem.destroy();
+                    }
+                }
+            }
+        }
+    }
+
+    // Creates a temporary ghost icon that plays the exit animation independently.
+    // originItem: the Task delegate calling this function (for coordinate mapping).
+    // iconSource should be task.closingDecoration (a stored QVariant/QIcon).
+    function createClosingAnimation(iconSource: var, originItem: Item, ghostW: real, ghostH: real): void {
+        if (!originItem) {
+            return;
+        }
+        var pos = originItem.mapToItem(_exitAnimationLayer, 0, 0);
+        // Pass iconSource as iconValue to the ghost Item; the internal
+        // Kirigami.Icon uses source: parent.iconValue binding to resolve it.
+        var ghost = ghostComponent.createObject(_exitAnimationLayer, {
+            iconValue: iconSource,
+            x: pos.x,
+            y: pos.y,
+            width: ghostW,
+            height: ghostH
+        });
+
+        // Create the exit animation as a child of the ghost, passing the ghost
+        // as targetItem via the createObject properties dict.
+        // scale with originItem.animMul to respect user's speed setting.
+        var anim = ghostExitAnimComponent.createObject(ghost, {
+            targetItem: ghost,
+            targetStartY: ghost.y,
+            targetSlide: 50,
+            speedMul: originItem.animMul || 1.0
+        });
+        anim.start();
     }
 
     readonly property Component groupDialogComponent: Qt.createComponent("GroupDialog.qml")

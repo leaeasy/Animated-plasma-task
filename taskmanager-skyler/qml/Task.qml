@@ -70,6 +70,12 @@ PlasmaCore.ToolTipArea {
     property var audioStreams: []
     property bool delayAudioStreamIndicator: false
     property bool completed: false
+    // Store decoration QVariant for ghost icon creation (model.decoration
+    // becomes unreliable during rowsAboutToBeRemoved).
+    property var closingDecoration: null
+    // Track WinIdList length to detect child window removals from a group.
+    property var winIdList: model.WinIdList
+    property int lastWinCount: winIdList ? winIdList.length : 0
 
     // Animation speed: 0=Fast, 1=Normal, 2=Slow.  Scales entry+minimize only.
     readonly property real animMul: {
@@ -138,6 +144,64 @@ PlasmaCore.ToolTipArea {
         to: 1.0
         duration: 250
         easing.type: Easing.OutBack
+    }
+
+    // Exit animation: slide down + scale down + fade out.
+    // For multi-window close: exit → reappearAnim phase 2 (see onFinished).
+    SequentialAnimation {
+        id: exitAnim
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "opacity"; to: 0; duration: 150 * task.animMul; easing.type: Easing.InQuad }
+            NumberAnimation { target: entrySlide; property: "y"; to: 50; duration: 150 * task.animMul; easing.type: Easing.InQuad }
+            NumberAnimation { target: icon; property: "scale"; to: 0.5; duration: 150 * task.animMul; easing.type: Easing.InQuad }
+        }
+        onFinished: {
+            if (model) {
+                var remaining = model.ChildCount;
+                if (model.IsLauncher) {
+                    // Pinned last-close → reappear (the launcher reappears via Component.onCompleted)
+                    // Pin readded launcher animation seperately.
+                } else if (remaining > 0) {
+                    // Other windows remain → scale popup
+                    reappearAnim.start();
+                }
+                // remaining == 0 && !IsLauncher → was removed by model (ghost handles exit)
+            }
+        }
+    }
+
+    // Reappear animation for multi-window close: scale up + fade in (with bounce)
+    SequentialAnimation {
+        id: reappearAnim
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; from: 0.5; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutBack }
+            NumberAnimation { target: icon; property: "opacity"; from: 0; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
+        }
+    }
+
+    // Launcher reappear animation: delayed to align near ghost exit finish, no bounce.
+    // Duration and delay both scale with animMul to match the user's speed preference.
+    SequentialAnimation {
+        id: launcherReappearAnim
+        PauseAnimation { duration: 100 * task.animMul }
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; from: 0.5; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
+            NumberAnimation { target: icon; property: "opacity"; from: 0; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
+        }
+    }
+
+    // Pulse animation when one of multiple windows closes but icon stays
+    // Brief scale up + opacity dip, then return to normal
+    SequentialAnimation {
+        id: pulseAnim
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; from: 0.8; to: 1.15; duration: 200; easing.type: Easing.OutQuad }
+            NumberAnimation { target: icon; property: "opacity"; from: 0.7; to: 1.0; duration: 200; easing.type: Easing.OutQuad }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 300; easing.type: Easing.OutBack }
+            NumberAnimation { target: icon; property: "opacity"; to: 1.0; duration: 300; easing.type: Easing.OutQuad }
+        }
     }
 
     Accessible.name: model.display
@@ -212,11 +276,23 @@ PlasmaCore.ToolTipArea {
     }
 
     onChildCountChanged: {
+        // Only keep the original geometry-publish logic.
         if (TaskManagerApplet.TaskTools.taskManagerInstanceCount < 2 && childCount > previousChildCount) {
             tasksModel.requestPublishDelegateGeometry(modelIndex(), backend.globalRect(task), task);
         }
 
         previousChildCount = childCount;
+    }
+
+    // Detect child window removals from the group by tracking WinIdList length.
+    // When a window closes: list shrinks. If still >0 → icon stays → play exit+reappear.
+    onWinIdListChanged: {
+        var newLen = task.winIdList ? task.winIdList.length : 0;
+        if (newLen < task.lastWinCount && newLen > 0) {
+            task.exitAnim.start();
+            // exitAnim.onFinished triggers reappearAnim (see exitAnim definition)
+        }
+        task.lastWinCount = newLen;
     }
 
     onIndexChanged: {
@@ -706,6 +782,9 @@ PlasmaCore.ToolTipArea {
     }
 
     Component.onCompleted: {
+        // Store decoration for ghost exit animation
+        closingDecoration = model ? model.decoration : null;
+
         if (!inPopup && model.IsWindow) {
             const component = Qt.createComponent("GroupExpanderOverlay.qml");
             component.createObject(task);
@@ -721,6 +800,14 @@ PlasmaCore.ToolTipArea {
             icon.opacity = 0.0;
             entrySlide.y = 30;
             entryAnim.start();
+        }
+        // Reappear animation for pinned launchers in icons-only mode
+        // (e.g. after the last window closes and the launcher becomes visible again)
+        // Uses launcherReappearAnim: 150ms delay + OutQuad (no bounce).
+        // Set opacity=0 so the icon is invisible during the PauseAnimation delay.
+        if (!inPopup && tasksRoot.iconsOnly && model.IsLauncher && !model.IsWindow && !model.IsStartup) {
+            icon.opacity = 0.0;
+            launcherReappearAnim.start();
         }
         completed = true;
         entryCooldown.start();
