@@ -114,7 +114,7 @@ PlasmaCore.ToolTipArea {
     }
     SequentialAnimation {
         id: minimizeAnim
-        PauseAnimation { duration: 50 }
+        PauseAnimation { duration: 50 * task.animMul }
         ParallelAnimation {
             NumberAnimation { target: icon; property: "opacity"; to: 0.5; duration: 80 * task.animMul; easing.type: Easing.InQuad }
             NumberAnimation { target: minimizeBounce; property: "y"; to: 10; duration: 80 * task.animMul; easing.type: Easing.InQuad }
@@ -134,7 +134,7 @@ PlasmaCore.ToolTipArea {
         target: icon
         property: "scale"
         to: 0.85
-        duration: 80
+        duration: 80 * task.animMul
         easing.type: Easing.OutQuad
     }
     NumberAnimation {
@@ -142,18 +142,18 @@ PlasmaCore.ToolTipArea {
         target: icon
         property: "scale"
         to: 1.0
-        duration: 250
+        duration: 250 * task.animMul
         easing.type: Easing.OutBack
     }
 
     // Exit animation: slide down + scale down + fade out.
-    // For multi-window close: exit → reappearAnim phase 2 (see onFinished).
+    // For multi-window close: exit → reappearAnim (see onFinished).
     SequentialAnimation {
         id: exitAnim
         ParallelAnimation {
-            NumberAnimation { target: icon; property: "opacity"; to: 0; duration: 150 * task.animMul; easing.type: Easing.InQuad }
-            NumberAnimation { target: entrySlide; property: "y"; to: 50; duration: 150 * task.animMul; easing.type: Easing.InQuad }
-            NumberAnimation { target: icon; property: "scale"; to: 0.5; duration: 150 * task.animMul; easing.type: Easing.InQuad }
+            NumberAnimation { target: icon; property: "opacity"; to: 0; duration: 100 * task.animMul; easing.type: Easing.InQuad }
+            NumberAnimation { target: entrySlide; property: "y"; to: 50; duration: 100 * task.animMul; easing.type: Easing.InQuad }
+            NumberAnimation { target: icon; property: "scale"; to: 0.5; duration: 100 * task.animMul; easing.type: Easing.InQuad }
         }
         onFinished: {
             if (model) {
@@ -172,8 +172,7 @@ PlasmaCore.ToolTipArea {
         }
     }
 
-    // Reappear animation for multi-window close: pop up like pinned launcher.
-    // Position resets instantly then delayed scale + fade in.
+    // Reappear animation for multi-window close: y resets instantly, scale + fade in.
     SequentialAnimation {
         id: reappearAnim
         PropertyAction { target: entrySlide; property: "y"; value: 0 }
@@ -212,12 +211,12 @@ PlasmaCore.ToolTipArea {
     SequentialAnimation {
         id: pulseAnim
         ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; from: 0.8; to: 1.15; duration: 200; easing.type: Easing.OutQuad }
-            NumberAnimation { target: icon; property: "opacity"; from: 0.7; to: 1.0; duration: 200; easing.type: Easing.OutQuad }
+            NumberAnimation { target: icon; property: "scale"; from: 0.8; to: 1.15; duration: 200 * task.animMul; easing.type: Easing.OutQuad }
+            NumberAnimation { target: icon; property: "opacity"; from: 0.7; to: 1.0; duration: 200 * task.animMul; easing.type: Easing.OutQuad }
         }
         ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 300; easing.type: Easing.OutBack }
-            NumberAnimation { target: icon; property: "opacity"; to: 1.0; duration: 300; easing.type: Easing.OutQuad }
+            NumberAnimation { target: icon; property: "scale"; to: 1.0; duration: 300 * task.animMul; easing.type: Easing.OutBack }
+            NumberAnimation { target: icon; property: "opacity"; to: 1.0; duration: 300 * task.animMul; easing.type: Easing.OutQuad }
         }
     }
 
