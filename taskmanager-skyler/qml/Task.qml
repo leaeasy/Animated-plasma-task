@@ -161,29 +161,31 @@ PlasmaCore.ToolTipArea {
                 if (model.IsLauncher) {
                     // Pinned last-close → reappear (the launcher reappears via Component.onCompleted)
                     // Pin readded launcher animation seperately.
-                } else if (remaining > 0) {
-                    // Other windows remain → scale popup
+                } else if (remaining > 0 || !model.IsGroupParent) {
+                    // remaining > 0: other windows remain in the group → scale popup
+                    // !IsGroupParent: group dissolved (2→1), delegate now a single window
+                    // Both cases need reappearAnim to undo exitAnim's opacity=0 / scale=0.5 / y=50
                     reappearAnim.start();
                 }
-                // remaining == 0 && !IsLauncher → was removed by model (ghost handles exit)
+                // remaining == 0 && IsGroupParent → group was removed by model (ghost handles exit)
             }
         }
     }
 
-    // Reappear animation for multi-window close: scale up + fade in (with bounce)
-    // Must also restore entrySlide.y/minimizeBounce.y to undo exitAnim's offset,
-    // otherwise the icon stays shifted down 50px and appears empty.
+    // Reappear animation for multi-window close: pop up like pinned launcher.
+    // Position resets instantly then delayed scale + fade in.
     SequentialAnimation {
         id: reappearAnim
+        PropertyAction { target: entrySlide; property: "y"; value: 0 }
+        PropertyAction { target: minimizeBounce; property: "y"; value: 0 }
+        PauseAnimation { duration: 100 * task.animMul }
         ParallelAnimation {
-            NumberAnimation { target: icon; property: "scale"; from: 0.5; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutBack }
+            NumberAnimation { target: icon; property: "scale"; from: 0.5; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
             NumberAnimation { target: icon; property: "opacity"; from: 0; to: 1.0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
-            NumberAnimation { target: entrySlide; property: "y"; to: 0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
-            NumberAnimation { target: minimizeBounce; property: "y"; to: 0; duration: 70 * task.animMul; easing.type: Easing.OutQuad }
         }
     }
 
-    // Launcher reappear animation: delayed to align near ghost exit finish, no bounce.
+    // Launcher reappear animation: delayed scale + fade in (no bounce).
     // Duration and delay both scale with animMul to match the user's speed preference.
     SequentialAnimation {
         id: launcherReappearAnim
