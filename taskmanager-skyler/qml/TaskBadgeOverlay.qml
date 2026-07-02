@@ -38,8 +38,8 @@ Item {
             anchors.rightMargin: -root.offset + root.extraHorizontalOffset
             y: root.badgeMaskY
 
-            Behavior on y {
-                NumberAnimation { duration: Kirigami.Units.longDuration }
+        Behavior on y {
+                NumberAnimation { duration: Kirigami.Units.longDuration * task.animMul }
             }
 
             visible: task.smartLauncherItem.countVisible
@@ -86,8 +86,8 @@ Item {
         y: root.badgeMaskY + root.offset
 
         Behavior on y {
-            NumberAnimation { duration: Kirigami.Units.longDuration }
-        }
+                NumberAnimation { duration: Kirigami.Units.longDuration * task.animMul }
+            }
 
         visible: task.smartLauncherItem.countVisible
 

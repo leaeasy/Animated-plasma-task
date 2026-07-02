@@ -59,7 +59,7 @@ Item {
                  }
                  NumberAnimation {
                      property: "opacity"
-                     duration: Kirigami.Units.longDuration
+                     duration: Kirigami.Units.longDuration * task.animMul
                  }
              }
         },
@@ -69,7 +69,7 @@ Item {
              SequentialAnimation {
                  NumberAnimation {
                      property: "opacity"
-                     duration: Kirigami.Units.longDuration
+                     duration: Kirigami.Units.longDuration * task.animMul
                  }
              }
         },

@@ -300,7 +300,11 @@ PlasmoidItem {
 
             for (var i = first; i <= last; i++) {
                 var task = taskRepeater.itemAt(i);
-                if (task && task.model && task.model.IsWindow) {
+                // Skip launcher window removals — the delegate gets recreated
+                // and launcherReappearAnim handles the visual.
+                // use HasLauncher (not IsLauncher) — the row has a running window
+                // so IsLauncher is false even for pinned launcher windows.
+                if (task && task.model && task.model.IsWindow && !task.model.HasLauncher) {
                     // Use task.closingDecoration (stored QVariant) instead of
                     // model.decoration which is unreliable during removal.
                     tasks.createClosingAnimation(
@@ -599,6 +603,43 @@ PlasmoidItem {
         }
     }
 
+    // Launcher bounce ghost component: clean single bounce, no opacity fade.
+    // Total duration matches exitAnim (200ms base) so rate setting scales consistently.
+    Component {
+        id: ghostBounceAnimComponent
+        SequentialAnimation {
+            id: ghostBounceAnim
+            property Item targetItem: null
+            property real speedMul: 1.0
+
+            ParallelAnimation {
+                NumberAnimation {
+                    target: ghostBounceAnim.targetItem
+                    property: "y"
+                    to: 6
+                    duration: 80 * ghostBounceAnim.speedMul
+                    easing.type: Easing.InQuad
+                }
+            }
+            ParallelAnimation {
+                NumberAnimation {
+                    target: ghostBounceAnim.targetItem
+                    property: "y"
+                    to: 0
+                    duration: 120 * ghostBounceAnim.speedMul
+                    easing.type: Easing.OutQuad
+                }
+            }
+            ScriptAction {
+                script: {
+                    if (ghostBounceAnim.targetItem) {
+                        ghostBounceAnim.targetItem.destroy();
+                    }
+                }
+            }
+        }
+    }
+
     // Creates a temporary ghost icon that plays the exit animation independently.
     // originItem: the Task delegate calling this function (for coordinate mapping).
     // iconSource should be task.closingDecoration (a stored QVariant/QIcon).
@@ -606,6 +647,7 @@ PlasmoidItem {
         if (!originItem) {
             return;
         }
+        var isLauncher = originItem && originItem.closingIsLauncher;
         var pos = originItem.mapToItem(_exitAnimationLayer, 0, 0);
         // Pass iconSource as iconValue to the ghost Item; the internal
         // Kirigami.Icon uses source: parent.iconValue binding to resolve it.
@@ -617,16 +659,24 @@ PlasmoidItem {
             height: ghostH
         });
 
-        // Create the exit animation as a child of the ghost, passing the ghost
-        // as targetItem via the createObject properties dict.
-        // scale with originItem.animMul to respect user's speed setting.
-        var anim = ghostExitAnimComponent.createObject(ghost, {
-            targetItem: ghost,
-            targetStartY: ghost.y,
-            targetSlide: 50,
-            speedMul: originItem.animMul || 1.0
-        });
-        anim.start();
+        if (isLauncher) {
+            // Launcher: bounce ghost (no opacity fade), launcherReappearAnim handles the
+            // re-entry bounce. This replaces the generic slide+fade ghost.
+            var bounce = ghostBounceAnimComponent.createObject(ghost, {
+                targetItem: ghost,
+                speedMul: originItem.animMul || 1.0
+            });
+            bounce.start();
+        } else {
+            // Normal: slide + fade ghost (existing behavior).
+            var anim = ghostExitAnimComponent.createObject(ghost, {
+                targetItem: ghost,
+                targetStartY: ghost.y,
+                targetSlide: 50,
+                speedMul: originItem.animMul || 1.0
+            });
+            anim.start();
+        }
     }
 
     readonly property Component groupDialogComponent: Qt.createComponent("GroupDialog.qml")
