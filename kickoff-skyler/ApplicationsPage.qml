@@ -52,25 +52,71 @@ BasePage {
         focus: true // needed for Loaders
         model: kickoff.rootModel
         isSidebar: true
-        // needed otherwise app displayed at top-level will show a first character as group.
         section.property: ""
+
+        // No ListView highlight — current item uses per-delegate background (instant).
+        view.highlight: null
+
+        // Hover-follow sliding bar: tracks mouse position smoothly
+        property int hoveredIndex: -1
+        property int hoveredY: 0
+        property int hoveredHeight: 0
+        property bool hoverShowing: false
+        Timer {
+            id: hoverHideTimer
+            interval: 200
+            onTriggered: sideBar.hoverShowing = false
+        }
+        PlasmaExtras.Highlight {
+            id: hoverHighlight
+            height: sideBar.hoveredHeight
+            width: sideBar.view.availableWidth
+            x: sideBar.view.contentItem?.x ?? 0
+            y: sideBar.hoveredY
+            active: false
+            hovered: true
+            opacity: sideBar.hoverShowing && !Plasmoid.configuration.switchCategoryOnHover ? 1 : 0
+            visible: opacity > 0
+            z: 1
+            Behavior on y {
+                NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+            }
+            Behavior on height {
+                NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+            }
+            Behavior on opacity {
+                NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+            }
+        }
+
         delegate: KickoffListDelegate {
             id: sideBarDelegate
             width: view.availableWidth
             isCategoryListItem: true
+            // Current item background: instant snap
             background: PlasmaExtras.Highlight {
-                // I have to do this for it to actually fill the item for some reason
                 anchors.fill: parent
                 active: false
-                hovered: sideBarDelegate.mouseArea.containsMouse || (flashFavoriteAnimation.running && sideBarDelegate.index === 0) || ((dropAreaLoader.item as DropArea)?.containsAcceptableDrag ?? false) || sideBarDelegate.ListView.isCurrentItem
-                visible: !Plasmoid.configuration.switchCategoryOnHover
-                    && !sideBarDelegate.isSeparator
-                    && hovered
-                opacity: flashFavoriteAnimation.running && sideBarDelegate.index === 0 ? root.flashFavorite : 1
+                hovered: sideBarDelegate.ListView.isCurrentItem
+                visible: hovered
+            }
+
+            // Track hover for the sliding bar
+            Connections {
+                target: sideBarDelegate.mouseArea
+                function onEntered() {
+                    hoverHideTimer.stop();
+                    sideBar.hoverShowing = true;
+                    sideBar.hoveredIndex = sideBarDelegate.index;
+                    sideBar.hoveredY = sideBarDelegate.y;
+                    sideBar.hoveredHeight = sideBarDelegate.height;
+                }
+                function onExited() {
+                    hoverHideTimer.restart();
+                }
             }
 
             component FavoritesDropArea: DropArea {
-                // should be  "as AbstractKickoffItemDelegate", but the type system gets confused when changing view style at runtime
                 readonly property Item draggedItem: kickoff.dragSource.sourceItem
                 readonly property bool acceptableDrag: draggedItem && !kickoff.rootModel.favoritesModel.isFavorite(draggedItem.model.favoriteId)
                 readonly property bool containsAcceptableDrag:  acceptableDrag && containsDrag
