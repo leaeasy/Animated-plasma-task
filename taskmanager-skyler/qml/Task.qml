@@ -58,7 +58,6 @@ PlasmaCore.ToolTipArea {
     property bool toolTipOpen: false
     property bool inPopup: false
     property bool isWindow: model.IsWindow
-    property bool minimizeFromClick: false
     property int childCount: model.ChildCount
     property int previousChildCount: 0
     property alias labelText: label.text
@@ -569,9 +568,6 @@ PlasmaCore.ToolTipArea {
             if (task.active) {
                 task.hideToolTip();
             }
-            if (model.IsActive) {
-                task.minimizeFromClick = true;
-            }
             TaskManagerApplet.TaskTools.activateTask(modelIndex(), model, point.modifiers, task, Plasmoid, tasksRoot, effectWatcher.registered);
         }
 
@@ -832,15 +828,8 @@ PlasmaCore.ToolTipArea {
             }
             StateChangeScript {
                 script: {
-                    // Always clear minimizeFromClick to prevent stale flag
-                    // from blocking future non-click minimize animations
-                    // (e.g. window clicked during entryCooldown → later Win+D).
-                    if (task.minimizeFromClick) {
-                        task.minimizeFromClick = false;
-                        return;  // skip animation on user click
-                    }
-                    if (entryCooldown.running) return;  // just appeared
-                    minimizeDelay.start();
+                    if (entryCooldown.running) return;
+                    minimizeAnim.start();
                 }
             }
         },
@@ -854,18 +843,7 @@ PlasmaCore.ToolTipArea {
         }
     ]
 
-    Timer {
-        id: minimizeDelay
-        interval: 50
-        onTriggered: {
-            if (entryCooldown.running) return;
-            // Don't fight exitAnim or reappear animations.
-            if (exitAnim.running || reappearAnim.running || launcherReappearAnim.running) return;
-            // Allow animation on both single windows and group parents.
-            if (task.parent && (task.isWindow || task.model.IsGroupParent) && task.model.IsMinimized)
-                minimizeAnim.start();
-        }
-    }
+    // Timer removed — minimizeAnim is now started directly from StateChangeScript.
 
     Component.onCompleted: {
         // Store decoration and launcher status for ghost exit animation
